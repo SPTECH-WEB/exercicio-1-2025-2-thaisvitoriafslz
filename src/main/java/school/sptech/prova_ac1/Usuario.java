@@ -13,8 +13,10 @@ public class Usuario {
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate dataNascimento;
 
+    // Construtor padrão
     public Usuario() {}
 
+    // Getters e Setters
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
 

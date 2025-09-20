@@ -15,7 +15,7 @@ public class UsuarioService {
     public Usuario cadastrarUsuario(Usuario usuario) {
         if (usuarioRepository.existsByEmail(usuario.getEmail()) ||
                 usuarioRepository.existsByCpf(usuario.getCpf())) {
-            return null;
+            return null; // Indica conflito
         }
         return usuarioRepository.save(usuario);
     }
@@ -43,12 +43,13 @@ public class UsuarioService {
     public Usuario atualizarUsuario(Integer id, Usuario usuarioAtualizado) {
         Optional<Usuario> usuarioExistente = usuarioRepository.findById(id);
         if (!usuarioExistente.isPresent()) {
-            return null;
+            return null; // Usuário não encontrado
         }
 
+        // Verifica se email ou CPF já existem para outros usuários
         if (usuarioRepository.existsByEmailAndIdNot(usuarioAtualizado.getEmail(), id) ||
                 usuarioRepository.existsByCpfAndIdNot(usuarioAtualizado.getCpf(), id)) {
-            throw new RuntimeException("CONFLICT");
+            throw new RuntimeException("CONFLICT"); // Indica conflito
         }
 
         usuarioAtualizado.setId(id);
