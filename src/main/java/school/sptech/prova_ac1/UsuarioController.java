@@ -1,36 +1,79 @@
 package school.sptech.prova_ac1;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
+@RestController
+@RequestMapping("/usuarios")
 public class UsuarioController {
 
+    @Autowired
+    private UsuarioService usuarioService;
+
+    @GetMapping
     public ResponseEntity<List<Usuario>> buscarTodos() {
-        return ResponseEntity.internalServerError().build();
+        List<Usuario> usuarios = usuarioService.listarTodosUsuarios();
+        return ResponseEntity.ok(usuarios);
     }
 
-    public ResponseEntity<Usuario> criar(Usuario usuario) {
-        return ResponseEntity.internalServerError().build();
+    @PostMapping
+    public ResponseEntity<Usuario> criar(@RequestBody Usuario usuario) {
+        Usuario usuarioCadastrado = usuarioService.cadastrarUsuario(usuario);
+        if (usuarioCadastrado == null) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(usuarioCadastrado);
     }
 
-    public ResponseEntity<Usuario> buscarPorId(Integer id) {
-        return ResponseEntity.internalServerError().build();
+    @GetMapping("/{id}")
+    public ResponseEntity<Usuario> buscarPorId(@PathVariable Integer id) {
+        Optional<Usuario> usuario = usuarioService.buscarUsuarioPorId(id);
+        if (usuario.isPresent()) {
+            return ResponseEntity.ok(usuario.get());
+        }
+        return ResponseEntity.notFound().build();
     }
 
-    public ResponseEntity<Void> deletar(Integer id) {
-        return ResponseEntity.internalServerError().build();
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletar(@PathVariable Integer id) {
+        boolean excluido = usuarioService.excluirUsuario(id);
+        if (excluido) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.notFound().build();
     }
 
-    public ResponseEntity<List<Usuario>> buscarPorDataNascimento(LocalDate nascimento) {
-        return ResponseEntity.internalServerError().build();
+    @GetMapping("/filtro-data")
+    public ResponseEntity<List<Usuario>> buscarPorDataNascimento(
+            @RequestParam("nascimento") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate nascimento) {
+        List<Usuario> usuarios = usuarioService.buscarPorDataNascimentoMaiorQue(nascimento);
+        return ResponseEntity.ok(usuarios);
     }
 
+    @PutMapping("/{id}")
     public ResponseEntity<Usuario> atualizar(
-            Integer id,
-            Usuario usuario
+            @PathVariable Integer id,
+            @RequestBody Usuario usuario
     ) {
-        return ResponseEntity.internalServerError().build();
+        try {
+            Usuario usuarioAtualizado = usuarioService.atualizarUsuario(id, usuario);
+            if (usuarioAtualizado == null) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(usuarioAtualizado);
+        } catch (RuntimeException e) {
+            if ("CONFLICT".equals(e.getMessage())) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).build();
+            }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }
+
